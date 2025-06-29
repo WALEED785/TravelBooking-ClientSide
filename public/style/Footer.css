@@ -1,0 +1,45 @@
+/* src/components/Footer.css */
+
+.footer-container {
+  background-color:goldenrod; /* Set background to yellow */
+  padding: 40px 20px;
+  color: #333;
+}
+
+.section-title {
+  font-weight: 600;
+}
+
+.subscribe-btn {
+  background-color: black;
+  border: none;
+  color: white;
+}
+.subscribe-btn:hover {
+  background-color: white;
+  border: none;
+  color:black;
+}
+
+.footer {
+  border-top: 1px solid #ccc;
+  padding-top: 30px;
+  margin-top: 30px;
+}
+
+.footer-column .footer-link {
+  color: #333;
+  text-decoration: none;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.footer-column .footer-link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.footer-title {
+  font-weight: bold;
+  font-size: 18px;
+}

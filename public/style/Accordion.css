@@ -1,0 +1,22 @@
+.golden-bg {
+  background-color: goldenrod;
+}
+.fixed-height-row {
+  height: 200px;
+}
+
+.fixed-height-col {
+  height: 400px;
+}
+
+.fixed-height-image {
+  max-height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.golden-bg {
+  background-color: goldenrod;
+  border-radius: 10px;
+  overflow-y: auto; /* Scroll if content overflows */
+}

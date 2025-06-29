@@ -1,0 +1,56 @@
+/* Card spacing */
+.magazine-card {
+  padding: 0.5vw; /* Gives 1vw total space between cards */
+}
+
+/* Negative margin to align container properly */
+.row {
+  margin: 0px !important;
+}
+
+/* Main card image styling */
+.card-img-top {
+  height: 240px;
+  object-fit: cover;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+/* Card container */
+.card {
+  width: 28vw !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 1rem;
+  padding: 0;
+}
+
+/* Card hover effect */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar */
+.card-body img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+/* Title hover effect */
+.card-title a {
+  transition: color 0.3s ease;
+}
+
+.card-title a:hover {
+  color: #007bff;
+  text-decoration: none;
+}
+
+/* Responsive container padding */
+@media (max-width: 767px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

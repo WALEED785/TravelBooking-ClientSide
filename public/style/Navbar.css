@@ -1,0 +1,120 @@
+/* Navbar container height */
+.navbar {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  min-height: 100px;
+}
+
+/* NAVBAR NAV */
+.navbar-nav {
+  height: 6.5vw;
+  flex-wrap: wrap;
+}
+
+/* Logo */
+.logo-img {
+  width: 12vw;
+  height: 6.688vw;
+  border-radius: 15px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Nav List Background */
+.nav-bg {
+  background-color: #e4e2e2;
+  margin: 0 5px;
+  border-radius: 12px;
+}
+
+/* Nav Links */
+.custom-link {
+  color: black !important;
+  text-decoration: none;
+  margin: 0 10px;
+  transition: color 0.3s ease;
+  font-size: 1rem;
+  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Play Button */
+.play-button {
+  width: 16vw;
+  height: 6.5vw;
+  background-color: rgb(3, 3, 51);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+/* Hover Effect */
+.play-button:hover {
+  background-color: goldenrod;
+  color: white;
+}
+
+/* Nav Item Spacing */
+.nav-item {
+  padding-left: 1vw;
+  padding-right: 1vw;
+}
+.nav-item a {
+  font-weight: bold;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 991.98px) {
+  .navbar {
+    flex-wrap: wrap;
+    padding: 10px 15px;
+  }
+
+  .navbar-nav {
+    height: auto;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .logo-img {
+    width: 12vw;
+    height: 6.688vw;
+  }
+
+  .custom-link {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+
+  .play-button {
+    width: 100%;
+    padding: 12px 0;
+    height: auto;
+    border-radius: 10px;
+    margin-top: 15px;
+  }
+
+  .nav-bg {
+    border-radius: 0;
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .nav-item {
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+  }
+}

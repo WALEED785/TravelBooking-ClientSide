@@ -1,0 +1,24 @@
+/* Visa.css */
+.accordion-item {
+  background-color: goldenrod !important;
+  border: none;
+}
+
+.accordion-button {
+  background-color: goldenrod !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.accordion-button:not(.collapsed) {
+  box-shadow: none;
+}
+
+.accordion-body {
+  background-color: goldenrod !important;
+  color: white !important;
+}
+/* Ensures the heading text stays in one line */
+.nowrap-text {
+  white-space: nowrap;
+}

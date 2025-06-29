@@ -1,0 +1,33 @@
+.hero-banner {
+  background-color: #f8f9fa; /* light gray background */
+}
+
+.hero-banner img {
+  max-width: 100px;
+}
+.Explore_Destionation{
+    font-size: 5vw;
+    margin-top: 46px;
+    font-family: Arial;
+    font-weight: bold;
+    color: rgb(6, 6, 75);
+    line-height: 1;
+}
+.DreamDestination{
+    
+    font-family: Arial;
+    line-height: 1;
+    font-size: 4vw;
+    color: #2D94F5;
+}
+.Popular{
+font-size: 2.813vw;
+    font-family: Arial;
+    margin-left: 30px;
+    color: rgb(6, 6, 75);
+    font-weight: bold;
+    white-space: nowrap;
+}
+.DestinationLogo{
+    background-color: goldenrod;
+}
