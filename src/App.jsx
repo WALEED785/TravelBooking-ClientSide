@@ -5,12 +5,10 @@ import { useLocation } from "react-router-dom";
 
 
 import About from "../public/pages/About";
-import Magzine from "../public/pages/Magzine";
 import Destination from "../public/pages/Destination";
 import PlainTrip from "../public/pages/PlainTrip";
-import Visa from "../public/pages/Visa";
-import ParisTravelPage from "../public/pages/ParisTravelPage";
 import Contact from "../public/pages/Contact";
+import LoginRegister from "../public/pages/LoginRegister";
 
 function TitleManager() {
   const location = useLocation();
@@ -22,10 +20,8 @@ function TitleManager() {
       "/": "JETSETGO",
       "/plaintrip": "Plan Your Trip",
       "/about": "About Us",
-      "/visa": "Visa Information",
-      "/magzine": "Magazine",
       "/contact": "contact",
-      "/ParisTravelPage": "Description",
+      "/login": "login",
     };
 
     document.title = titles[path] || "JETSETGO";
@@ -42,10 +38,8 @@ function App() {
         <Route path="/" element={<Destination />} />
         <Route path="/plaintrip" element={<PlainTrip />} />
         <Route path="/about" element={<About />} />
-        <Route path="/visa" element={<Visa />} />
-        <Route path="/magzine" element={<Magzine />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/ParisTravelPage" element={<ParisTravelPage />} />
+         <Route path="/login" element={<LoginRegister />} /> 
       </Routes>
     </Router>
   );

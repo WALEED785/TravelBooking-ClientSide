@@ -3,7 +3,6 @@ import Navbar from '../components/Navbar';
 import HeroBanner from '../components/Hero';
 import AccordionBootstrap from '../components/Accordion';
 import Card from '../components/Card.jsx';
-import Visa from '../components/Visa.jsx';
 import Footer from "../components/Footer.jsx";
 
 const PlainTrip = () => {
@@ -104,7 +103,6 @@ const PlainTrip = () => {
           ))}
         </div>
       </div>
-      <Visa />
       <Footer />
     </div>
   );
