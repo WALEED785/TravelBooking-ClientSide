@@ -52,6 +52,13 @@ const Navbar = () => {
             <li className="nav-item">
               <Link className="nav-link custom-link" to="/about">About</Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link custom-link" to="/search">AI Search</Link>
+            </li>
+            {token ? (
+            <li className="nav-item">
+              <Link className="nav-link custom-link" to="/profile">Profile</Link>
+            </li>) : ("")}
 
             {/* Login/Logout Toggle */}
             <li className="nav-item">
@@ -63,27 +70,9 @@ const Navbar = () => {
                 <Link className="nav-link custom-link" to="/login">Login</Link>
               )}
             </li>
-
-            {/* Mobile View Button */}
-            <li className="nav-item d-lg-none text-center">
-              <Link to="/plaintrip" className="play-button">PLAN YOUR</Link>
-            </li>
           </ul>
         </div>
 
-        {/* Desktop View Search Bar */}
-        <div className="d-none d-lg-flex align-items-center">
-          <form className="d-flex" role="search">
-            <input
-              className="form-control me-2 play-button"
-              type="search"
-              placeholder="Search"
-              aria-label="Search"
-              style={{ padding: '6px 18px', borderRadius: '25px', border: '1px solid #ccc' }}
-            />
-            <button className="btn play-button" type="submit">Search</button>
-          </form>
-        </div>
       </div>
     </nav>
   );

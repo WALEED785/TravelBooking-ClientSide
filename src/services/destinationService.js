@@ -15,7 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add auth token if available
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token'); // Updated to match your navbar
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,8 @@ api.interceptors.response.use(
     // Handle common HTTP errors
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -69,6 +70,7 @@ const handleServiceError = (error, defaultMessage) => {
   }
 };
 
+// Simplified service - only read operations
 export const getDestinations = async (config = {}) => {
   try {
     const response = await api.get('/destinations', config);
@@ -90,40 +92,6 @@ export const getDestinationById = async (id, config = {}) => {
     return response;
   } catch (error) {
     handleServiceError(error, `Failed to fetch destination ${id}`);
-  }
-};
-
-export const createDestination = async (destinationData, config = {}) => {
-  try {
-    if (!destinationData?.name?.trim()) {
-      throw new Error('Name is required');
-    }
-    if (!destinationData?.country?.trim()) {
-      throw new Error('Country is required');
-    }
-    return await api.post('/destinations', destinationData, config);
-  } catch (error) {
-    handleServiceError(error, 'Failed to create destination');
-  }
-};
-
-export const updateDestination = async (id, destinationData, config = {}) => {
-  try {
-    if (!destinationData?.name?.trim()) {
-      throw new Error('Name is required');
-    }
-    return await api.put(`/destinations/${id}`, destinationData, config);
-  } catch (error) {
-    handleServiceError(error, `Failed to update destination ${id}`);
-  }
-};
-
-export const deleteDestination = async (id, config = {}) => {
-  try {
-    await api.delete(`/destinations/${id}`, config);
-    return true;
-  } catch (error) {
-    handleServiceError(error, `Failed to delete destination ${id}`);
   }
 };
 

@@ -1,18 +1,21 @@
-// src/hooks/useAuth.js
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Initialize auth state
   useEffect(() => {
     const initAuth = () => {
       try {
         const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
+        if (currentUser) {
+          setUser(currentUser);
+        }
       } catch (err) {
         console.error('Auth initialization error:', err);
         setError('Failed to initialize authentication');
@@ -28,12 +31,17 @@ export const useAuth = () => {
   const login = useCallback(async (credentials) => {
     setLoading(true);
     setError(null);
-    debugger
+
     try {
       const result = await authService.login(credentials);
-      
       if (result.success) {
         setUser(result.data.user);
+
+        // Wait a tick to ensure state is stable before navigating
+        setTimeout(() => {
+          navigate('/about');
+        }, 100);
+
         return { success: true, data: result.data };
       } else {
         setError(result.error);
@@ -46,7 +54,7 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   // Register function
   const register = useCallback(async (userData) => {
@@ -55,7 +63,6 @@ export const useAuth = () => {
     
     try {
       const result = await authService.register(userData);
-      
       if (result.success) {
         return { success: true, message: result.message };
       } else {
@@ -71,23 +78,20 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Logout function
+  // Logout
   const logout = useCallback(() => {
     authService.logout();
     setUser(null);
     setError(null);
   }, []);
 
-  // Update user profile
   const updateProfile = useCallback(async (userId, userData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await authService.updateProfile(userId, userData);
-      
       if (result.success) {
-        // Refresh user data
         const currentUser = authService.getCurrentUser();
         setUser(currentUser);
         return { success: true, message: result.message };
@@ -104,22 +108,18 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Check if user is authenticated
   const isAuthenticated = useCallback(() => {
     return authService.isAuthenticated();
   }, []);
 
-  // Get user role
   const getUserRole = useCallback(() => {
     return user?.role || null;
   }, [user]);
 
-  // Check if user has specific role
   const hasRole = useCallback((role) => {
     return user?.role === role;
   }, [user]);
 
-  // Clear error
   const clearError = useCallback(() => {
     setError(null);
   }, []);

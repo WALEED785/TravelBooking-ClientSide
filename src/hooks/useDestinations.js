@@ -2,10 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   getDestinations, 
-  getDestinationById,
-  createDestination,
-  updateDestination,
-  deleteDestination
+  getDestinationById
 } from '../services/destinationService';
 
 export const useDestinations = (autoFetch = true) => {
@@ -169,70 +166,5 @@ export const useDestination = (id) => {
       error: null,
       status: 'idle'
     })
-  };
-};
-
-export const useDestinationMutation = () => {
-  const [state, setState] = useState({
-    loading: false,
-    error: null,
-    data: null,
-    status: 'idle'
-  });
-
-  const executeMutation = useCallback(async (mutationFn, ...args) => {
-    try {
-      setState({
-        loading: true,
-        error: null,
-        data: null,
-        status: 'loading'
-      });
-      
-      const result = await mutationFn(...args);
-      
-      setState({
-        loading: false,
-        error: null,
-        data: result,
-        status: 'success'
-      });
-      
-      return result;
-    } catch (error) {
-      setState({
-        loading: false,
-        error,
-        data: null,
-        status: 'error'
-      });
-      throw error;
-    }
-  }, []);
-
-  const create = useCallback((data) => 
-    executeMutation(createDestination, data), 
-    [executeMutation]
-  );
-
-  const update = useCallback((id, data) => 
-    executeMutation(updateDestination, id, data), 
-    [executeMutation]
-  );
-
-  const remove = useCallback((id) => 
-    executeMutation(deleteDestination, id), 
-    [executeMutation]
-  );
-
-  return {
-    ...state,
-    createDestination: create,
-    updateDestination: update,
-    deleteDestination: remove,
-    isIdle: state.status === 'idle',
-    isLoading: state.status === 'loading',
-    isError: state.status === 'error',
-    isSuccess: state.status === 'success'
   };
 };

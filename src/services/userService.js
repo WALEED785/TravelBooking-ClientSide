@@ -1,19 +1,64 @@
 // src/services/userService.js
-import api from '../utils/api';
+import axios from 'axios';
+
+// Configure axios instance for user API
+const api = axios.create({
+  baseURL: 'https://localhost:7060/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
+
+// Request interceptor for adding auth tokens
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for handling common response patterns
+api.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const userService = {
-  // Get all users (Admin only)
-  async getAllUsers() {
+  // Get current user profile
+  async getCurrentUser() {
     try {
-      const response = await api.get('https://localhost:7060/api/User');
+      const user = localStorage.getItem('auth_user');
+      if (user) {
+        const userData = JSON.parse(user);
+        const response = await api.get(`/User/${userData.userId}`);
+        return {
+          success: true,
+          data: response
+        };
+      }
       return {
-        success: true,
-        data: response.data
+        success: false,
+        error: 'No user found in storage'
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to fetch users'
+        error: error.response?.data?.Message || error.message || 'Failed to fetch user profile'
       };
     }
   },
@@ -21,10 +66,10 @@ export const userService = {
   // Get user by ID
   async getUserById(id) {
     try {
-      const response = await api.get(`https://localhost:7060/api/User/${id}`);
+      const response = await api.get(`/User/${id}`);
       return {
         success: true,
-        data: response.data
+        data: response
       };
     } catch (error) {
       return {
@@ -34,51 +79,18 @@ export const userService = {
     }
   },
 
-  // Create new user (Admin only)
-  async createUser(userData) {
+  // Update user profile
+  async updateProfile(id, userData) {
     try {
-      const response = await api.post('https://localhost:7060/api/User/register', userData);
+      const response = await api.put(`/User/${id}`, userData);
       return {
         success: true,
-        data: response.data,
-        message: response.data.Message || 'User created successfully'
+        message: 'Profile updated successfully'
       };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to create user'
-      };
-    }
-  },
-
-  // Update user (Admin only)
-  async updateUser(id, userData) {
-    try {
-      const response = await api.put(`https://localhost:7060/api/User/${id}`, userData);
-      return {
-        success: true,
-        message: 'User updated successfully'
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to update user'
-      };
-    }
-  },
-
-  // Delete user (Admin only)
-  async deleteUser(id) {
-    try {
-      await api.delete(`https://localhost:7060/api/User/${id}`);
-      return {
-        success: true,
-        message: 'User deleted successfully'
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to delete user'
+        error: error.response?.data?.Message || error.message || 'Failed to update profile'
       };
     }
   },
@@ -106,73 +118,11 @@ export const userService = {
       errors.password = 'Password must be at least 6 characters long';
     }
 
-    // Role validation
-    if (userData.role && !['User', 'Admin'].includes(userData.role)) {
-      errors.role = 'Role must be either User or Admin';
-    }
-
     return {
       isValid: Object.keys(errors).length === 0,
       errors
     };
-  },
-
-  // Search users
-  async searchUsers(query) {
-    try {
-      const response = await api.get('https://localhost:7060/api/User');
-      const users = response.data;
-      
-      if (!query || query.trim() === '') {
-        return {
-          success: true,
-          data: users
-        };
-      }
-
-      const filteredUsers = users.filter(user => 
-        user.username?.toLowerCase().includes(query.toLowerCase()) ||
-        user.email?.toLowerCase().includes(query.toLowerCase()) ||
-        user.fullName?.toLowerCase().includes(query.toLowerCase())
-      );
-
-      return {
-        success: true,
-        data: filteredUsers
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to search users'
-      };
-    }
-  },
-
-  // Get user statistics
-  async getUserStats() {
-    try {
-      const response = await api.get('https://localhost:7060/api/User');
-      const users = response.data;
-      
-      const stats = {
-        totalUsers: users.length,
-        adminUsers: users.filter(user => user.role === 'Admin').length,
-        regularUsers: users.filter(user => user.role === 'User').length,
-        recentUsers: users.filter(user => {
-          // Assuming there's a createdAt field, if not available, return empty array
-          return false;
-        }).length
-      };
-
-      return {
-        success: true,
-        data: stats
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.Message || error.message || 'Failed to fetch user statistics'
-      };
-    }
   }
 };
+
+export default api;

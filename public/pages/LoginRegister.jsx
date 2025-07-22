@@ -39,7 +39,7 @@ const LoginRegister = () => {
 
       if (res.success) {
         const data = res.data; // This should be your LoginResponseDTO
-
+        debugger
         // Store in localStorage directly
         localStorage.setItem('user', JSON.stringify({
           userId: data.userId,

@@ -11,7 +11,6 @@ const authAPI = axios.create({
   },
 });
 
-// Login & Register only
 export const authService = {
   // Login user
   async login(credentials) {
@@ -26,10 +25,7 @@ export const authService = {
 
       // Save to localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({ userId, username, role, expiry }));
-
-      // Redirect after successful login
-      window.location.href = '/';
+      localStorage.setItem('auth_user', JSON.stringify({ userId, username, role, expiry }));
 
       return {
         success: true,
@@ -60,5 +56,28 @@ export const authService = {
         error: error.response?.data?.message || 'Registration failed'
       };
     }
+  },
+
+  // Get currently logged-in user
+  getCurrentUser() {
+    const storedUser = localStorage.getItem('auth_user');
+    if (!storedUser) return null;
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      return null;
+    }
+  },
+
+  // Is user authenticated
+  isAuthenticated() {
+    return !!localStorage.getItem('token');
+  },
+
+  // Logout
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_user');
   }
 };

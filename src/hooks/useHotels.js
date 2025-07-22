@@ -1,10 +1,8 @@
+// src/hooks/useHotels.js
 import { useState, useCallback, useEffect } from 'react';
 import { 
   getHotels, 
   getHotelById, 
-  createHotel, 
-  updateHotel, 
-  deleteHotel,
   getHotelsByDestination
 } from '../services/hotelService';
 
@@ -53,97 +51,53 @@ export const useHotel = (id) => {
     }
   }, [id, fetchHotel]);
 
-
   return { hotel, loading, error, fetchHotel };
 };
 
-export const useHotelMutation = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-
-  const resetState = useCallback(() => {
-    setError(null);
-    setSuccess(false);
-  }, []);
-
-  const createNewHotel = async (hotelData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(false);
-      const data = await createHotel(hotelData);
-      setSuccess(true);
-      return data;
-    } catch (err) {
-      setError(err.message || 'Failed to create hotel');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateExistingHotel = async (id, hotelData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(false);
-      const data = await updateHotel(id, hotelData);
-      setSuccess(true);
-      return data;
-    } catch (err) {
-      setError(err.message || 'Failed to update hotel');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteExistingHotel = async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(false);
-      await deleteHotel(id);
-      setSuccess(true);
-    } catch (err) {
-      setError(err.message || 'Failed to delete hotel');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { 
-    loading, 
-    error, 
-    success, 
-    resetState,
-    createNewHotel, 
-    updateExistingHotel,
-    deleteExistingHotel 
-  };
-};
+// Mutation hooks removed - only read operations available
 
 export const useHotelsByDestination = (destinationId) => {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchHotelsByDestination = useCallback(async () => {
-    if (!destinationId) return;
+  const fetchHotelsByDestination = useCallback(async (id = destinationId) => {
+    // Don't fetch if no valid ID is provided
+    if (!id || id === 'undefined' || isNaN(parseInt(id))) {
+      console.warn('Invalid destination ID for hotels:', id);
+      setHotels([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
-      const data = await getHotelsByDestination(destinationId);
+      console.log('Fetching hotels for destination:', id);
+      const data = await getHotelsByDestination(parseInt(id));
       setHotels(data);
     } catch (err) {
+      console.error('Error fetching hotels by destination:', err);
       setError(err.message || 'Failed to fetch hotels by destination');
+      setHotels([]);
     } finally {
       setLoading(false);
     }
   }, [destinationId]);
+
+  // Auto-fetch when destinationId changes and is valid
+  useEffect(() => {
+    if (destinationId && destinationId !== 'undefined' && !isNaN(parseInt(destinationId))) {
+      setLoading(true);
+      fetchHotelsByDestination(destinationId);
+    } else {
+      // Reset state if no valid destination ID
+      setHotels([]);
+      setLoading(false);
+      setError(null);
+    }
+  }, [destinationId, fetchHotelsByDestination]);
 
   return { hotels, loading, error, fetchHotelsByDestination };
 };

@@ -4,9 +4,6 @@ import {
   getFlights,
   searchFlights as searchFlightsService,
   getFlightById,
-  createFlight as createFlightService,
-  updateFlight as updateFlightService,
-  deleteFlight as deleteFlightService,
   getFlightsByDestination as getFlightsByDestinationService
 } from '../services/flightService';
 
@@ -78,26 +75,46 @@ export const useFlights = (autoFetch = true) => {
  * -------------------------------------------------------- */
 export const useFlightsByDestination = (destinationId) => {
   const [flights, setFlights] = useState([]);
-  const [loading, setLoading] = useState(!!destinationId);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchFlightsByDestination = useCallback(async (id) => {
+  const fetchFlightsByDestination = useCallback(async (id = destinationId) => {
+    // Don't fetch if no valid ID is provided
+    if (!id || id === 'undefined' || isNaN(parseInt(id))) {
+      console.warn('Invalid destination ID for flights:', id);
+      setFlights([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await getFlightsByDestinationService(id);
+      console.log('Fetching flights for destination:', id);
+      const data = await getFlightsByDestinationService(parseInt(id));
       if (!Array.isArray(data)) throw new Error('Invalid data format');
       setFlights(data);
     } catch (err) {
+      console.error('Error fetching flights by destination:', err);
       setError(buildError(err, `Failed to load flights for destination ${id}`));
       setFlights([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [destinationId]);
 
+  // Auto-fetch when destinationId changes and is valid
   useEffect(() => {
-    if (destinationId) fetchFlightsByDestination(destinationId);
+    if (destinationId && destinationId !== 'undefined' && !isNaN(parseInt(destinationId))) {
+      setLoading(true);
+      fetchFlightsByDestination(destinationId);
+    } else {
+      // Reset state if no valid destination ID
+      setFlights([]);
+      setLoading(false);
+      setError(null);
+    }
   }, [destinationId, fetchFlightsByDestination]);
 
   return {
@@ -149,40 +166,5 @@ export const useFlight = (id) => {
 };
 
 /* ----------------------------------------------------------
- *  4️⃣  Hook: useFlightMutation — create / update / delete
+ *  Mutation hooks removed - only read operations available
  * -------------------------------------------------------- */
-export const useFlightMutation = () => {
-  const [state, setState] = useState({
-    loading: false,
-    error: null,
-    success: false,
-    data: null
-  });
-
-  const resetState = useCallback(() => {
-    setState({ loading: false, error: null, success: false, data: null });
-  }, []);
-
-  const mutate = useCallback(async (fn, ...args) => {
-    try {
-      setState((s) => ({ ...s, loading: true, error: null, success: false }));
-      const result = await fn(...args);
-      setState({ loading: false, error: null, success: true, data: result });
-      return result;
-    } catch (err) {
-      const errObj = buildError(err, 'Operation failed');
-      setState({ loading: false, error: errObj, success: false, data: null });
-      throw errObj;
-    }
-  }, []);
-
-  return {
-    ...state,
-    resetState,
-    createFlight: (data) => mutate(createFlightService, data),
-    updateFlight: (id, data) => mutate(updateFlightService, id, data),
-    deleteFlight: (id) => mutate(deleteFlightService, id),
-    isError: !!state.error,
-    isSuccess: state.success
-  };
-};
