@@ -113,7 +113,7 @@ const BookingCard = ({ booking }) => {
               </div>
               {booking.hotel && (
                 <div className="small text-muted">
-                  {booking.hotel.name} • ${booking.hotel.pricePerNight}/night
+                  {booking.hotel.name} • PKR{booking.hotel.pricePerNight}/night
                 </div>
               )}
             </div>
@@ -133,7 +133,7 @@ const BookingCard = ({ booking }) => {
         {/* Price */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <span className="text-muted">Total Amount</span>
-          <span className="h5 text-primary mb-0">${booking.totalAmount}</span>
+          <span className="h5 text-primary mb-0">PKR-{booking.totalAmount}</span>
         </div>
 
         {/* Action Buttons */}
@@ -183,7 +183,7 @@ const BookingCard = ({ booking }) => {
                 </div>
                 <div className="col-6 mt-2">
                   <strong>Total Amount:</strong><br />
-                  ${booking.totalAmount}
+                  PKR-{booking.totalAmount}
                 </div>
               </div>
             </div>

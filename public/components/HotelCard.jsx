@@ -78,7 +78,7 @@ const HotelCard = ({ hotel }) => {
         />
         <div className="position-absolute top-0 end-0 m-3">
           <span className="badge bg-primary px-3 py-2" style={{ fontSize: '0.9rem', borderRadius: '20px' }}>
-            ${hotel.pricePerNight}
+            PKR- {hotel.pricePerNight}
             <small className="text-white-50"> /night</small>
           </span>
         </div>

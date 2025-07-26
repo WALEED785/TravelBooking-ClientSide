@@ -1,105 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Search, MapPin, Plane, Hotel, Calendar, Users, Filter, Star, Clock, DollarSign, ChevronDown, Sparkles, Globe, ArrowRight } from 'lucide-react';
+import { useSearch, useAutocomplete, usePagination } from '../../src/hooks/useSearch';
 import "../style/TravelSearch.css";
 
 const TravelSearch = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState('destinations');
-  const [autocompleteResults, setAutocompleteResults] = useState([]);
-  const [searchResults, setSearchResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('');
-  const [sortDescending, setSortDescending] = useState(false);
+  // Use the search hook
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchType,
+    setSearchType,
+    searchResults,
+    loading,
+    error,
+    currentPage,
+    sortBy,
+    setSortBy,
+    sortDescending,
+    setSortDescending,
+    search,
+    hasResults,
+    totalPages
+  } = useSearch();
+
+  // Use the autocomplete hook
+  const {
+    query: autocompleteQuery,
+    setQuery: setAutocompleteQuery,
+    results: autocompleteResults,
+    loading: autocompleteLoading,
+    showResults: showAutocomplete,
+    setShowResults: setShowAutocomplete,
+    selectResult,
+    hideResults,
+    hasResults: hasAutocompleteResults
+  } = useAutocomplete();
+
+  // Use the pagination hook
+  const {
+    currentPage: paginationPage,
+    goToPage,
+    nextPage,
+    prevPage,
+    getPageNumbers
+  } = usePagination(searchResults?.total || 0, 10);
+
   const autocompleteRef = useRef(null);
 
-  const API_BASE_URL = 'http://localhost:5000/api/elasticsearch';
-
-  // Debounced autocomplete
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.length >= 2) {
-        fetchAutocomplete();
-      } else {
-        setAutocompleteResults([]);
-        setShowAutocomplete(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Close autocomplete when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
-        setShowAutocomplete(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchAutocomplete = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/autocomplete?query=${encodeURIComponent(searchQuery)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAutocompleteResults(data);
-        setShowAutocomplete(true);
-      }
-    } catch (error) {
-      console.error('Autocomplete error:', error);
-    }
+  // Sync search query with autocomplete query
+  const handleQueryChange = (value) => {
+    setSearchQuery(value);
+    setAutocompleteQuery(value);
   };
 
-  const handleSearch = async (page = 1) => {
-    if (!searchQuery.trim()) return;
-
-    setLoading(true);
-    setCurrentPage(page);
-
-    try {
-      const params = new URLSearchParams({
-        query: searchQuery,
-        page: page.toString(),
-        pageSize: '10',
-        ...(sortBy && { sortBy }),
-        ...(sortDescending && { sortDescending: 'true' })
-      });
-
-      const response = await fetch(`${API_BASE_URL}/search/${searchType}?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-      } else {
-        console.error('Search failed:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle autocomplete selection
   const handleAutocompleteSelect = (result) => {
-    setSearchQuery(result.text);
-    setSearchType(result.type === 'destination' ? 'destinations' : 'hotels');
-    setShowAutocomplete(false);
-    setTimeout(() => handleSearch(), 100);
+    const selected = selectResult(result);
+    setSearchQuery(selected.text);
+    setSearchType(selected.type === 'destination' ? 'destinations' : 'hotels');
+    setTimeout(() => search(1, selected.text, selected.type === 'destination' ? 'destinations' : 'hotels'), 100);
   };
 
+  // Handle search with pagination
+  const handleSearch = (page = 1) => {
+    search(page);
+    goToPage(page);
+  };
+
+  // Handle enter key press
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      setShowAutocomplete(false);
+      hideResults();
       handleSearch();
     }
   };
 
   const renderSearchResults = () => {
-    if (!searchResults) return null;
+    if (!hasResults) return null;
 
     return (
       <div className="results-container">
@@ -167,17 +144,15 @@ const TravelSearch = () => {
         {/* Pagination */}
         <div className="pagination">
           <div className="pagination-buttons">
-            {Array.from({ length: Math.ceil(searchResults.total / 10) }, (_, i) => i + 1)
-              .slice(Math.max(0, currentPage - 3), currentPage + 2)
-              .map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handleSearch(page)}
-                  className={`pagination-button ${page === currentPage ? 'active' : ''}`}
-                >
-                  {page}
-                </button>
-              ))}
+            {getPageNumbers(5).map((page) => (
+              <button
+                key={page}
+                onClick={() => handleSearch(page)}
+                className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -246,7 +221,7 @@ const TravelSearch = () => {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleQueryChange(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder={`Search ${searchType}...`}
                   className="search-input"
@@ -254,7 +229,7 @@ const TravelSearch = () => {
               </div>
 
               {/* Autocomplete Dropdown */}
-              {showAutocomplete && autocompleteResults.length > 0 && (
+              {showAutocomplete && hasAutocompleteResults && (
                 <div className="autocomplete-dropdown">
                   {autocompleteResults.map((result, index) => (
                     <button
@@ -357,7 +332,7 @@ const FlightCard = ({ flight }) => (
         </p>
       </div>
       <div className="card-price">
-        <p className="card-price-amount flight">${flight.price}</p>
+        <p className="card-price-amount flight">PKR- {flight.price}</p>
         <p className="card-price-label">total</p>
       </div>
     </div>
@@ -403,7 +378,7 @@ const HotelCard = ({ hotel }) => (
         </p>
       </div>
       <div className="card-price">
-        <p className="card-price-amount hotel">${hotel.pricePerNight}</p>
+        <p className="card-price-amount hotel">PKR- {hotel.pricePerNight}</p>
         <p className="card-price-label">per night</p>
       </div>
     </div>

@@ -172,7 +172,7 @@ const BookingPage = () => {
                 <div className="d-flex justify-content-between align-items-center">
                   <span className="fw-semibold">Total Amount</span>
                   <span className="h5 text-primary mb-0">
-                    ${type === 'flight' ? itemDetails.price : itemDetails.pricePerNight}
+                    PKR- {type === 'flight' ? itemDetails.price : itemDetails.pricePerNight}
                     {type === 'hotel' && <small className="text-muted"> /night</small>}
                   </span>
                 </div>

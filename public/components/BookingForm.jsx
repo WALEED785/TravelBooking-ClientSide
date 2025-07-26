@@ -302,19 +302,19 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
               <span>
                 {bookingType === 'flight' ? 'Price per Guest' : 'Price per Night'}
               </span>
-              <span>${bookingType === 'flight' ? itemDetails?.price : itemDetails?.pricePerNight}</span>
+              <span>PKR- {bookingType === 'flight' ? itemDetails?.price : itemDetails?.pricePerNight}</span>
             </div>
             <div className="d-flex justify-content-between mb-2">
               <span>
                 Quantity ({bookingType === 'flight' ? formData.numberOfGuests : formData.numberOfNights} 
                 {bookingType === 'flight' ? ' guest(s)' : ' night(s)'})
               </span>
-              <span>${totalAmount}</span>
+              <span>PKR- {totalAmount}</span>
             </div>
             <hr />
             <div className="d-flex justify-content-between">
               <strong>Total Amount</strong>
-              <strong className="text-primary">${totalAmount}</strong>
+              <strong className="text-primary">PKR- {totalAmount}</strong>
             </div>
           </div>
 
@@ -352,7 +352,7 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
               ) : (
                 <>
                   <i className="bi bi-check-circle me-2"></i>
-                  Confirm Booking - ${totalAmount}
+                  Confirm Booking - PKR- {totalAmount}
                 </>
               )}
             </button>

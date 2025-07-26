@@ -96,7 +96,7 @@ const FlightCard = ({ flight }) => {
             className="badge bg-success px-3 py-2" 
             style={{ fontSize: '1rem', borderRadius: '20px' }}
           >
-            ${flight.price}
+            PKR- {flight.price}
           </span>
         </div>
 
@@ -147,7 +147,7 @@ const FlightCard = ({ flight }) => {
             style={{ borderRadius: '8px', fontSize: '0.95rem' }}
             onClick={handleBooking}
           >
-            Book Flight - ${flight.price}
+            Book Flight - PKR- {flight.price}
           </button>
           <button 
             className="btn btn-outline-secondary btn-sm py-1" 
