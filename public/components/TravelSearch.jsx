@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Search, MapPin, Plane, Hotel, Calendar, Users, Filter, Star, Clock, DollarSign, ChevronDown, Sparkles, Globe, ArrowRight } from 'lucide-react';
 import { useSearch, useAutocomplete, usePagination } from '../../src/hooks/useSearch';
 import "../style/TravelSearch.css";
@@ -20,7 +20,8 @@ const TravelSearch = () => {
     setSortDescending,
     search,
     hasResults,
-    totalPages
+    totalPages,
+    clearError
   } = useSearch();
 
   // Use the autocomplete hook
@@ -51,20 +52,37 @@ const TravelSearch = () => {
   const handleQueryChange = (value) => {
     setSearchQuery(value);
     setAutocompleteQuery(value);
+    // Clear any existing errors when user starts typing
+    if (error) {
+      clearError();
+    }
   };
 
   // Handle autocomplete selection
-  const handleAutocompleteSelect = (result) => {
+  const handleAutocompleteSelect = async (result) => {
     const selected = selectResult(result);
     setSearchQuery(selected.text);
-    setSearchType(selected.type === 'destination' ? 'destinations' : 'hotels');
-    setTimeout(() => search(1, selected.text, selected.type === 'destination' ? 'destinations' : 'hotels'), 100);
+    
+    // Determine search type based on result type
+    const newSearchType = selected.type === 'destination' ? 'destinations' : 'hotels';
+    setSearchType(newSearchType);
+    
+    // Perform search with selected result
+    setTimeout(() => {
+      search(1, selected.text, newSearchType);
+    }, 100);
   };
 
   // Handle search with pagination
-  const handleSearch = (page = 1) => {
-    search(page);
-    goToPage(page);
+  const handleSearch = async (page = 1) => {
+    if (!searchQuery.trim()) {
+      return;
+    }
+    
+    const result = await search(page);
+    if (result.success) {
+      goToPage(page);
+    }
   };
 
   // Handle enter key press
@@ -72,6 +90,38 @@ const TravelSearch = () => {
     if (e.key === 'Enter') {
       hideResults();
       handleSearch();
+    }
+  };
+
+  // Handle click outside autocomplete to hide results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
+        hideResults();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [hideResults]);
+
+  // Handle sort change - re-search with new sort
+  const handleSortChange = async (newSortBy) => {
+    setSortBy(newSortBy);
+    if (hasResults && searchQuery.trim()) {
+      // Re-search with new sorting
+      await search(currentPage);
+    }
+  };
+
+  // Handle sort direction change
+  const handleSortDirectionChange = async () => {
+    setSortDescending(!sortDescending);
+    if (hasResults && searchQuery.trim()) {
+      // Re-search with new sort direction
+      await search(currentPage);
     }
   };
 
@@ -90,7 +140,7 @@ const TravelSearch = () => {
             <div className="sort-select-wrapper">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => handleSortChange(e.target.value)}
                 className="sort-select"
               >
                 <option value="">Sort by relevance</option>
@@ -100,6 +150,7 @@ const TravelSearch = () => {
                   <>
                     <option value="price">Price</option>
                     <option value="departureTime">Departure Time</option>
+                    <option value="airline">Airline</option>
                   </>
                 )}
                 {searchType === 'hotels' && (
@@ -112,8 +163,9 @@ const TravelSearch = () => {
               <ChevronDown className="sort-select-icon" />
             </div>
             <button
-              onClick={() => setSortDescending(!sortDescending)}
+              onClick={handleSortDirectionChange}
               className="sort-direction-button"
+              title={sortDescending ? 'Sort Ascending' : 'Sort Descending'}
             >
               {sortDescending ? '↓' : '↑'}
             </button>
@@ -124,7 +176,7 @@ const TravelSearch = () => {
         <div className="results-grid">
           {searchResults.results.map((result, index) => (
             <div 
-              key={result.id} 
+              key={result.id || index} 
               className="card"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -142,19 +194,42 @@ const TravelSearch = () => {
         </div>
 
         {/* Pagination */}
-        <div className="pagination">
-          <div className="pagination-buttons">
-            {getPageNumbers(5).map((page) => (
-              <button
-                key={page}
-                onClick={() => handleSearch(page)}
-                className={`pagination-button ${page === currentPage ? 'active' : ''}`}
-              >
-                {page}
-              </button>
-            ))}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <div className="pagination-buttons">
+              {currentPage > 1 && (
+                <button
+                  onClick={() => handleSearch(currentPage - 1)}
+                  className="pagination-button"
+                >
+                  Previous
+                </button>
+              )}
+              
+              {getPageNumbers(5).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handleSearch(page)}
+                  className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              {currentPage < totalPages && (
+                <button
+                  onClick={() => handleSearch(currentPage + 1)}
+                  className="pagination-button"
+                >
+                  Next
+                </button>
+              )}
+            </div>
+            <div className="pagination-info">
+              Page {currentPage} of {totalPages}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -223,9 +298,19 @@ const TravelSearch = () => {
                   value={searchQuery}
                   onChange={(e) => handleQueryChange(e.target.value)}
                   onKeyPress={handleKeyPress}
+                  onFocus={() => {
+                    if (hasAutocompleteResults) {
+                      setShowAutocomplete(true);
+                    }
+                  }}
                   placeholder={`Search ${searchType}...`}
                   className="search-input"
                 />
+                {autocompleteLoading && (
+                  <div className="search-input-loading">
+                    <div className="search-button-spinner"></div>
+                  </div>
+                )}
               </div>
 
               {/* Autocomplete Dropdown */}
@@ -233,7 +318,7 @@ const TravelSearch = () => {
                 <div className="autocomplete-dropdown">
                   {autocompleteResults.map((result, index) => (
                     <button
-                      key={index}
+                      key={`${result.id}-${index}`}
                       onClick={() => handleAutocompleteSelect(result)}
                       className="autocomplete-item"
                     >
@@ -270,6 +355,16 @@ const TravelSearch = () => {
               )}
             </button>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="error-message">
+              <p>{error}</p>
+              <button onClick={clearError} className="error-dismiss">
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Results */}
@@ -310,6 +405,15 @@ const DestinationCard = ({ destination }) => (
         ))}
       </div>
     )}
+
+    {destination.averageHotelPrice > 0 && (
+      <div className="card-meta">
+        <span className="card-meta-item">
+          <DollarSign size={14} />
+          Avg Hotel: PKR {destination.averageHotelPrice.toFixed(0)}
+        </span>
+      </div>
+    )}
     
     <button className="card-button destination">
       View Details
@@ -319,50 +423,70 @@ const DestinationCard = ({ destination }) => (
 );
 
 // Enhanced Flight Card Component
-const FlightCard = ({ flight }) => (
-  <div className="card-content">
-    <div className="card-header">
-      <div>
-        <h3 className="card-title">{flight.airline}</h3>
-        <p className="card-location">
-          <div className="card-location-icon flight">
-            <Plane />
+const FlightCard = ({ flight }) => {
+  const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  return (
+    <div className="card-content">
+      <div className="card-header">
+        <div>
+          <h3 className="card-title">{flight.airline}</h3>
+          <p className="card-location">
+            <div className="card-location-icon flight">
+              <Plane />
+            </div>
+            {flight.departureDestination} → {flight.arrivalDestination}
+          </p>
+        </div>
+        <div className="card-price">
+          <p className="card-price-amount flight">PKR {flight.price}</p>
+          <p className="card-price-label">total</p>
+        </div>
+      </div>
+      
+      <div className="flight-details">
+        <div className="flight-time-info">
+          <Clock className="flight-time-icon departure" />
+          <div>
+            <p className="flight-time-label">Departure</p>
+            <p className="flight-time-value">{new Date(flight.departureTime).toLocaleString()}</p>
           </div>
-          {flight.departureDestination} → {flight.arrivalDestination}
-        </p>
-      </div>
-      <div className="card-price">
-        <p className="card-price-amount flight">PKR- {flight.price}</p>
-        <p className="card-price-label">total</p>
-      </div>
-    </div>
-    
-    <div className="flight-details">
-      <div className="flight-time-info">
-        <Clock className="flight-time-icon departure" />
-        <div>
-          <p className="flight-time-label">Departure</p>
-          <p className="flight-time-value">{new Date(flight.departureTime).toLocaleString()}</p>
         </div>
-      </div>
-      <div className="flight-time-info">
-        <Clock className="flight-time-icon arrival" />
-        <div>
-          <p className="flight-time-label">Arrival</p>
-          <p className="flight-time-value">{new Date(flight.arrivalTime).toLocaleString()}</p>
+        <div className="flight-time-info">
+          <Clock className="flight-time-icon arrival" />
+          <div>
+            <p className="flight-time-label">Arrival</p>
+            <p className="flight-time-value">{new Date(flight.arrivalTime).toLocaleString()}</p>
+          </div>
         </div>
+        {flight.durationMinutes && (
+          <div className="flight-duration">
+            <span>Duration: {formatDuration(flight.durationMinutes)}</span>
+          </div>
+        )}
       </div>
-      <div className="flight-duration">
-        <span>Duration: {flight.duration}</span>
-      </div>
+
+      {flight.amenities && flight.amenities.length > 0 && (
+        <div className="card-tags">
+          {flight.amenities.slice(0, 3).map((amenity, index) => (
+            <span key={index} className="card-tag flight">
+              {amenity}
+            </span>
+          ))}
+        </div>
+      )}
+      
+      <button className="card-button flight">
+        Book Flight
+        <ArrowRight className="card-button-icon" />
+      </button>
     </div>
-    
-    <button className="card-button flight">
-      Book Flight
-      <ArrowRight className="card-button-icon" />
-    </button>
-  </div>
-);
+  );
+};
 
 // Enhanced Hotel Card Component
 const HotelCard = ({ hotel }) => (
@@ -378,7 +502,7 @@ const HotelCard = ({ hotel }) => (
         </p>
       </div>
       <div className="card-price">
-        <p className="card-price-amount hotel">PKR- {hotel.pricePerNight}</p>
+        <p className="card-price-amount hotel">PKR {hotel.pricePerNight}</p>
         <p className="card-price-label">per night</p>
       </div>
     </div>
@@ -395,7 +519,9 @@ const HotelCard = ({ hotel }) => (
       </div>
     </div>
     
-    <p className="card-description">{hotel.description}</p>
+    {hotel.description && (
+      <p className="card-description">{hotel.description}</p>
+    )}
     
     {hotel.amenities && hotel.amenities.length > 0 && (
       <div className="card-tags">

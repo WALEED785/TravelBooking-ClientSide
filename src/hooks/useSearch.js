@@ -1,8 +1,7 @@
-// hooks/useSearch.js
-import { useState, useEffect, useCallback, useRef } from 'react';
-import apiService from '../services/apiService';
+// src/hooks/useSearch.js
+import { useState, useCallback, useRef } from 'react';
+import { searchService } from '../services/searchService';
 
-// Main search hook
 export const useSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('destinations');
@@ -12,114 +11,126 @@ export const useSearch = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('');
   const [sortDescending, setSortDescending] = useState(false);
-  const [filters, setFilters] = useState([]);
 
   // Search function
-  const search = useCallback(async (page = 1, customQuery = null, customType = null) => {
-    const query = customQuery !== null ? customQuery : searchQuery;
-    const type = customType !== null ? customType : searchType;
-    
-    if (!query.trim()) {
-      setError('Search query is required');
-      return;
+  const search = useCallback(async (page = 1, query = searchQuery, type = searchType) => {
+    // Validate query
+    const validation = searchService.validateSearchQuery(query);
+    if (!validation.isValid) {
+      setError(Object.values(validation.errors).join(', '));
+      return { success: false, error: Object.values(validation.errors).join(', ') };
     }
 
     setLoading(true);
     setError(null);
-    setCurrentPage(page);
-
+    
     try {
-      const searchParams = {
-        query,
-        page,
-        pageSize: 10,
-        sortBy,
-        sortDescending,
-        filters
-      };
+      let result;
+      
+      switch (type) {
+        case 'destinations':
+          result = await searchService.searchDestinations(query, page);
+          break;
+        case 'flights':
+          result = await searchService.searchFlights(query, page);
+          break;
+        case 'hotels':
+          result = await searchService.searchHotels(query, page);
+          break;
+        default:
+          throw new Error('Invalid search type');
+      }
 
-      const results = await apiService.search(type, searchParams);
-      setSearchResults(results);
+      if (result.success) {
+        let formattedResults = searchService.formatSearchResults(result.data, type);
+        
+        // Apply sorting if specified
+        if (sortBy) {
+          formattedResults.results = searchService.sortResults(
+            formattedResults.results, 
+            sortBy, 
+            sortDescending
+          );
+        }
+        
+        setSearchResults(formattedResults);
+        setCurrentPage(page);
+        return { success: true, data: formattedResults };
+      } else {
+        setError(result.error);
+        setSearchResults(null);
+        return { success: false, error: result.error };
+      }
     } catch (err) {
-      setError(err.message || 'Search failed');
+      const errorMessage = 'Failed to perform search';
+      setError(errorMessage);
+      setSearchResults(null);
       console.error('Search error:', err);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, searchType, sortBy, sortDescending, filters]);
+  }, [searchQuery, searchType, sortBy, sortDescending]);
 
-  // Reset search results when search type changes
-  useEffect(() => {
-    if (searchResults) {
-      setSearchResults(null);
-      setCurrentPage(1);
-    }
-  }, [searchType]);
-
-  // Auto-search when sort options change
-  useEffect(() => {
-    if (searchResults && searchQuery.trim()) {
-      search(1);
-    }
-  }, [sortBy, sortDescending]);
-
+  // Clear search results
   const clearResults = useCallback(() => {
     setSearchResults(null);
+    setError(null);
     setCurrentPage(1);
+  }, []);
+
+  // Clear error
+  const clearError = useCallback(() => {
     setError(null);
   }, []);
 
+  // Reset search state
   const resetSearch = useCallback(() => {
     setSearchQuery('');
     setSearchResults(null);
+    setError(null);
     setCurrentPage(1);
     setSortBy('');
     setSortDescending(false);
-    setFilters([]);
-    setError(null);
   }, []);
 
+  const hasResults = searchResults && searchResults.results && searchResults.results.length > 0;
+  const totalPages = searchResults ? searchResults.totalPages : 0;
+
   return {
-    // State
     searchQuery,
+    setSearchQuery,
     searchType,
+    setSearchType,
     searchResults,
     loading,
     error,
     currentPage,
+    setCurrentPage,
     sortBy,
-    sortDescending,
-    filters,
-    
-    // Actions
-    setSearchQuery,
-    setSearchType,
     setSortBy,
+    sortDescending,
     setSortDescending,
-    setFilters,
     search,
     clearResults,
+    clearError,
     resetSearch,
-    
-    // Computed values
-    hasResults: searchResults && searchResults.results && searchResults.results.length > 0,
-    totalResults: searchResults ? searchResults.total : 0,
-    totalPages: searchResults ? Math.ceil(searchResults.total / 10) : 0
+    hasResults,
+    totalPages
   };
 };
 
-// Autocomplete hook with debouncing
-export const useAutocomplete = (delay = 300) => {
+export const useAutocomplete = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState(null);
-  const timeoutRef = useRef(null);
+  const [showResults, setShowResults] = useState(false);
+  const debounceTimeoutRef = useRef(null);
 
-  // Debounced search function
-  const debouncedSearch = useCallback(async (searchQuery) => {
-    if (!searchQuery || searchQuery.length < 2) {
+  // Fetch autocomplete suggestions with debouncing
+  const fetchSuggestions = useCallback(async (searchQuery) => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
       setResults([]);
       setShowResults(false);
       return;
@@ -129,11 +140,19 @@ export const useAutocomplete = (delay = 300) => {
     setError(null);
 
     try {
-      const autocompleteResults = await apiService.getAutocomplete(searchQuery);
-      setResults(autocompleteResults || []);
-      setShowResults(true);
+      const result = await searchService.autocomplete(searchQuery);
+      
+      if (result.success) {
+        setResults(result.data.suggestions || []);
+        setShowResults(true);
+      } else {
+        setError(result.error);
+        setResults([]);
+        setShowResults(false);
+      }
     } catch (err) {
-      setError(err.message || 'Autocomplete failed');
+      const errorMessage = 'Failed to fetch suggestions';
+      setError(errorMessage);
       setResults([]);
       setShowResults(false);
       console.error('Autocomplete error:', err);
@@ -142,121 +161,66 @@ export const useAutocomplete = (delay = 300) => {
     }
   }, []);
 
-  // Effect for debouncing
-  useEffect(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  // Set query with debounced autocomplete
+  const setQueryWithDebounce = useCallback((newQuery) => {
+    setQuery(newQuery);
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      debouncedSearch(query);
-    }, delay);
+    // Set new timeout for debounced search
+    debounceTimeoutRef.current = setTimeout(() => {
+      fetchSuggestions(newQuery);
+    }, 300);
+  }, [fetchSuggestions]);
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [query, delay, debouncedSearch]);
-
+  // Select a result from autocomplete
   const selectResult = useCallback((result) => {
     setQuery(result.text);
     setShowResults(false);
     return result;
   }, []);
 
-  const clearAutocomplete = useCallback(() => {
-    setQuery('');
-    setResults([]);
-    setShowResults(false);
-    setError(null);
-  }, []);
-
+  // Hide results
   const hideResults = useCallback(() => {
     setShowResults(false);
   }, []);
 
+  // Clear autocomplete state
+  const clearAutocomplete = useCallback(() => {
+    setQuery('');
+    setResults([]);
+    setError(null);
+    setShowResults(false);
+    
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+  }, []);
+
+  const hasResults = results && results.length > 0;
+
   return {
-    // State
     query,
+    setQuery: setQueryWithDebounce,
     results,
     loading,
-    showResults,
     error,
-    
-    // Actions
-    setQuery,
+    showResults,
+    setShowResults,
     selectResult,
-    clearAutocomplete,
     hideResults,
-    showResults: () => setShowResults(true),
-    
-    // Computed values
-    hasResults: results.length > 0
+    clearAutocomplete,
+    hasResults
   };
 };
 
-// Hook for managing search filters
-export const useSearchFilters = (initialFilters = {}) => {
-  const [filters, setFilters] = useState(initialFilters);
-  const [activeFilters, setActiveFilters] = useState([]);
-
-  const addFilter = useCallback((key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  }, []);
-
-  const removeFilter = useCallback((key) => {
-    setFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[key];
-      return newFilters;
-    });
-  }, []);
-
-  const clearAllFilters = useCallback(() => {
-    setFilters({});
-    setActiveFilters([]);
-  }, []);
-
-  const toggleFilter = useCallback((key, value) => {
-    setFilters(prev => {
-      if (prev[key] === value) {
-        const newFilters = { ...prev };
-        delete newFilters[key];
-        return newFilters;
-      } else {
-        return { ...prev, [key]: value };
-      }
-    });
-  }, []);
-
-  // Update active filters array when filters object changes
-  useEffect(() => {
-    const active = Object.entries(filters).map(([key, value]) => ({ key, value }));
-    setActiveFilters(active);
-  }, [filters]);
-
-  return {
-    filters,
-    activeFilters,
-    addFilter,
-    removeFilter,
-    clearAllFilters,
-    toggleFilter,
-    hasFilters: Object.keys(filters).length > 0
-  };
-};
-
-// Hook for managing pagination
-export const usePagination = (totalItems, itemsPerPage = 10) => {
+export const usePagination = (totalItems, itemsPerPage) => {
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
   const goToPage = useCallback((page) => {
     if (page >= 1 && page <= totalPages) {
@@ -266,104 +230,51 @@ export const usePagination = (totalItems, itemsPerPage = 10) => {
 
   const nextPage = useCallback(() => {
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage(currentPage + 1);
     }
   }, [currentPage, totalPages]);
 
   const prevPage = useCallback(() => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage(currentPage - 1);
     }
   }, [currentPage]);
 
-  const reset = useCallback(() => {
-    setCurrentPage(1);
-  }, []);
-
-  // Generate page numbers for pagination UI
   const getPageNumbers = useCallback((maxVisible = 5) => {
     const pages = [];
-    const halfVisible = Math.floor(maxVisible / 2);
+    const half = Math.floor(maxVisible / 2);
     
-    let startPage = Math.max(1, currentPage - halfVisible);
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    let start = Math.max(1, currentPage - half);
+    let end = Math.min(totalPages, currentPage + half);
     
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+    // Adjust if we're near the beginning or end
+    if (end - start + 1 < maxVisible) {
+      if (start === 1) {
+        end = Math.min(totalPages, start + maxVisible - 1);
+      } else if (end === totalPages) {
+        start = Math.max(1, end - maxVisible + 1);
+      }
     }
     
-    for (let i = startPage; i <= endPage; i++) {
+    for (let i = start; i <= end; i++) {
       pages.push(i);
     }
     
     return pages;
   }, [currentPage, totalPages]);
 
+  const canGoNext = currentPage < totalPages;
+  const canGoPrev = currentPage > 1;
+
   return {
     currentPage,
     totalPages,
-    startIndex,
-    endIndex,
     goToPage,
     nextPage,
     prevPage,
-    reset,
     getPageNumbers,
-    hasNextPage: currentPage < totalPages,
-    hasPrevPage: currentPage > 1,
-    isFirstPage: currentPage === 1,
-    isLastPage: currentPage === totalPages
+    canGoNext,
+    canGoPrev,
+    setCurrentPage
   };
-};
-
-// Hook for handling outside clicks (useful for dropdowns)
-export const useOutsideClick = (callback) => {
-  const ref = useRef();
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
-        callback();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [callback]);
-
-  return ref;
-};
-
-// Hook for managing localStorage with fallback
-export const useLocalStorage = (key, initialValue) => {
-  const [storedValue, setStoredValue] = useState(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  });
-
-  const setValue = useCallback((value) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
-  }, [key, storedValue]);
-
-  const removeValue = useCallback(() => {
-    try {
-      window.localStorage.removeItem(key);
-      setStoredValue(initialValue);
-    } catch (error) {
-      console.warn(`Error removing localStorage key "${key}":`, error);
-    }
-  }, [key, initialValue]);
-
-  return [storedValue, setValue, removeValue];
 };
