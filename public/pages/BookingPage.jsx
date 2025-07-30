@@ -47,7 +47,7 @@ const BookingPage = () => {
       flightId: type === 'flight' ? parseInt(id) : null,
       hotelId: type === 'hotel' ? parseInt(id) : null,
       bookingDate: new Date().toISOString(),
-      totalAmount: itemDetails?.price || itemDetails?.pricePerNight || 0,
+      totalPrice: itemDetails?.price || itemDetails?.pricePerNight || 0,
       status: 'Confirmed',
       ...bookingData
     };

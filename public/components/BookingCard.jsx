@@ -133,7 +133,7 @@ const BookingCard = ({ booking }) => {
         {/* Price */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <span className="text-muted">Total Amount</span>
-          <span className="h5 text-primary mb-0">PKR-{booking.totalAmount}</span>
+          <span className="h5 text-primary mb-0">PKR-{booking.totalPrice}</span>
         </div>
 
         {/* Action Buttons */}
@@ -183,7 +183,7 @@ const BookingCard = ({ booking }) => {
                 </div>
                 <div className="col-6 mt-2">
                   <strong>Total Amount:</strong><br />
-                  PKR-{booking.totalAmount}
+                  PKR-{booking.totalPrice}
                 </div>
               </div>
             </div>

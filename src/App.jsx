@@ -29,7 +29,7 @@ function TitleManager() {
     };
 
     // Handle dynamic routes
-    if (path.startsWith("/destination/")) {
+    if (path.startsWith("/plaintrip/")) {
       document.title = "Destination Details - JETSETGO";
     } else if (path.startsWith("/plaintrip/")) {
       document.title = "Trip Details - JETSETGO";
@@ -51,7 +51,6 @@ function App() {
         <Route path="/" element={<Destination />} />
         <Route path="/plaintrip" element={<PlainTrip />} />
         <Route path="/plaintrip/:destinationId" element={<PlainTrip />} />
-        <Route path="/destination/:destinationId" element={<Destination />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/search" element={<TravelSearchPage />} />

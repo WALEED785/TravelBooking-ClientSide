@@ -92,6 +92,7 @@ export const getBookingById = async (id, config = {}) => {
 
 export const createBooking = async (bookingData, config = {}) => {
   try {
+    debugger
     // Validate required fields
     if (!bookingData.userId) {
       throw new Error('User ID is required');
@@ -102,7 +103,7 @@ export const createBooking = async (bookingData, config = {}) => {
     if (!bookingData.bookingDate) {
       throw new Error('Booking date is required');
     }
-    if (!bookingData.totalAmount || bookingData.totalAmount <= 0) {
+    if (!bookingData.totalPrice || bookingData.totalPrice <= 0) {
       throw new Error('Total amount must be greater than 0');
     }
 

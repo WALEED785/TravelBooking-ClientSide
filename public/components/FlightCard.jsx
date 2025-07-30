@@ -81,19 +81,19 @@ const FlightCard = ({ flight }) => {
   const airlineIcon = getAirlineIcon(flight.airline);
 
   return (
-    <div className="card h-100 shadow-sm border-0" style={{ borderRadius: '12px' }}>
-      <div className="card-body p-4">
+    <div className="card h-100 shadow-sm border-1" style={{ borderRadius: '12px', border: '1px solid #808080' }}>
+      <div className="card-body p-1">
         {/* Header with Airline and Price */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex justify-content-between align-items-center mb-1">
           <div className="d-flex align-items-center">
-            <span className="me-3" style={{ fontSize: '1.5rem' }}>{airlineIcon}</span>
+            <span className="me-1" style={{ fontSize: '1.5rem' }}>{airlineIcon}</span>
             <div>
               <h6 className="mb-0 fw-bold">{flight.airline}</h6>
               <small className="text-muted">Flight FL{flight.flightId.toString().padStart(4, '0')}</small>
             </div>
           </div>
           <span 
-            className="badge bg-success px-3 py-2" 
+            className="badge bg-success px-1 py-1" 
             style={{ fontSize: '1rem', borderRadius: '20px' }}
           >
             PKR- {flight.price}
@@ -106,7 +106,7 @@ const FlightCard = ({ flight }) => {
           <div className="col-4">
             <div className="text-center">
               <div className="h4 mb-1 fw-bold text-dark">{departureInfo.time}</div>
-              <div className="small text-muted mb-2">{departureInfo.date}</div>
+              <div className="small text-muted mb-1">{departureInfo.date}</div>
               <div className="fw-semibold text-primary" style={{ fontSize: '0.9rem' }}>
                 {flight.departureDestination || `Destination ${flight.departureDestinationId}`}
               </div>
@@ -116,11 +116,11 @@ const FlightCard = ({ flight }) => {
           {/* Arrow and Duration */}
           <div className="col-4">
             <div className="text-center">
-              <div className="mb-2">
+              <div className="mb-1">
                 <span className="text-primary" style={{ fontSize: '1.2rem' }}>→</span>
               </div>
               <div 
-                className="badge bg-light text-dark px-3 py-1" 
+                className="badge bg-light text-dark px-1 py-1" 
                 style={{ fontSize: '0.8rem', borderRadius: '15px' }}
               >
                 {duration}
@@ -132,7 +132,7 @@ const FlightCard = ({ flight }) => {
           <div className="col-4">
             <div className="text-center">
               <div className="h4 mb-1 fw-bold text-dark">{arrivalInfo.time}</div>
-              <div className="small text-muted mb-2">{arrivalInfo.date}</div>
+              <div className="small text-muted mb-1">{arrivalInfo.date}</div>
               <div className="fw-semibold text-primary" style={{ fontSize: '0.9rem' }}>
                 {flight.arrivalDestination || `Destination ${flight.arrivalDestinationId}`}
               </div>
@@ -143,7 +143,7 @@ const FlightCard = ({ flight }) => {
         {/* Action Buttons */}
         <div className="d-grid gap-2">
           <button 
-            className="btn btn-primary py-2 fw-semibold" 
+            className="btn btn-primary py-1 fw-semibold" 
             style={{ borderRadius: '8px', fontSize: '0.95rem' }}
             onClick={handleBooking}
           >

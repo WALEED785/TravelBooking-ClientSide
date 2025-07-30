@@ -41,14 +41,6 @@ const staticImages = [
     highlighted: false,
   },
   {
-    name: "PARIS",
-    country: "FRANCE",
-    imgSrc: "https://images.unsplash.com/photo-1502602898536-47ad22581b52?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    code: "CDG",
-    barcode: "█████████████",
-    highlighted: false,
-  },
-  {
     name: "LONDON",
     country: "UK",
     imgSrc: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
@@ -77,7 +69,7 @@ const mergeDestinationData = (backendDestinations, staticImages) => {
       code: matchingImage?.code || "DEF",
       barcode: matchingImage?.barcode || "█████████████",
       highlighted: matchingImage?.highlighted || false,
-      link: `/destination/${destination.destinationId}`, // Dynamic link based on ID
+      link: `/plaintrip/${destination.destinationId}`, // Dynamic link based on ID
     };
   });
 };

@@ -16,16 +16,16 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
     agreeToTerms: false
   });
 
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   // Calculate total amount when form data changes
   useEffect(() => {
     if (bookingType === 'hotel' && itemDetails?.pricePerNight) {
       const nights = formData.numberOfNights || 1;
-      setTotalAmount(itemDetails.pricePerNight * nights);
+      setTotalPrice(itemDetails.pricePerNight * nights);
     } else if (bookingType === 'flight' && itemDetails?.price) {
       const guests = formData.numberOfGuests || 1;
-      setTotalAmount(itemDetails.price * guests);
+      setTotalPrice(itemDetails.price * guests);
     }
   }, [bookingType, itemDetails, formData.numberOfNights, formData.numberOfGuests]);
 
@@ -86,7 +86,7 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
       UserId: user?.id || user?.userId, // Use the actual user ID from your authentication
       HotelId: bookingType === 'hotel' ? itemDetails?.id : null,
       FlightId: bookingType === 'flight' ? itemDetails?.id : null,
-      TotalPrice: totalAmount,
+      TotalPrice: totalPrice,
       Status: 'Confirmed' // Default status
     };
 
@@ -309,12 +309,12 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
                 Quantity ({bookingType === 'flight' ? formData.numberOfGuests : formData.numberOfNights} 
                 {bookingType === 'flight' ? ' guest(s)' : ' night(s)'})
               </span>
-              <span>PKR- {totalAmount}</span>
+              <span>PKR- {totalPrice}</span>
             </div>
             <hr />
             <div className="d-flex justify-content-between">
               <strong>Total Amount</strong>
-              <strong className="text-primary">PKR- {totalAmount}</strong>
+              <strong className="text-primary">PKR- {totalPrice}</strong>
             </div>
           </div>
 
@@ -352,7 +352,7 @@ const BookingForm = ({ bookingType, itemDetails, user, onSubmit, loading, error 
               ) : (
                 <>
                   <i className="bi bi-check-circle me-2"></i>
-                  Confirm Booking - PKR- {totalAmount}
+                  Confirm Booking - PKR- {totalPrice}
                 </>
               )}
             </button>

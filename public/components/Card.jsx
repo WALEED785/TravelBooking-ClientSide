@@ -35,7 +35,7 @@ const Card = ({
           <p className="card-text">Code: {code}</p>
           <p className="card-text">Barcode: {barcode}</p>
           <Link 
-            to={link || `/destination/${destinationId}`} 
+            to={link || `/plaintrip/${destinationId}`} 
             className="btn btn-primary"
           >
             View More

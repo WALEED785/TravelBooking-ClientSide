@@ -124,7 +124,7 @@ const DestinationDetails = ({ destinationId }) => {
           ) : (
             <div className="row">
               {hotels.map((hotel) => (
-                <div key={hotel.hotelId} className="col-lg-4 col-md-6 mb-4">
+                <div key={hotel.hotelId} className="col-lg-3 col-md-4 mb-2">
                   <HotelCard hotel={hotel} />
                 </div>
               ))}
@@ -166,7 +166,7 @@ const DestinationDetails = ({ destinationId }) => {
           ) : (
             <div className="row">
               {flights.map((flight) => (
-                <div key={flight.flightId} className="col-lg-6 col-md-12 mb-4">
+                <div key={flight.flightId} className="col-lg-3 col-md-4 mb-2">
                   <FlightCard flight={flight} />
                 </div>
               ))}

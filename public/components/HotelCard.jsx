@@ -10,7 +10,12 @@ const HotelCard = ({ hotel }) => {
     "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+    "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   ];
 
   // Get image based on hotel ID
@@ -68,7 +73,7 @@ const HotelCard = ({ hotel }) => {
   const amenitiesList = formatAmenities(hotel.amenities);
 
   return (
-    <div className="card h-100 shadow-sm border-0" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+    <div className="card h-100 shadow-sm border-1" style={{ borderRadius: '12px', overflow: 'hidden',  border: '1px solid #808080' }}>
       <div className="position-relative">
         <img 
           src={getHotelImage()} 
@@ -77,25 +82,25 @@ const HotelCard = ({ hotel }) => {
           style={{ height: '220px', objectFit: 'cover' }}
         />
         <div className="position-absolute top-0 end-0 m-3">
-          <span className="badge bg-primary px-3 py-2" style={{ fontSize: '0.9rem', borderRadius: '20px' }}>
+          <span className="badge bg-primary px-1 py-1" style={{ fontSize: '0.9rem', borderRadius: '20px' }}>
             PKR- {hotel.pricePerNight}
             <small className="text-white-50"> /night</small>
           </span>
         </div>
       </div>
       
-      <div className="card-body p-4 d-flex flex-column">
-        <h5 className="card-title fw-bold mb-2" style={{ fontSize: '1.1rem' }}>{hotel.name}</h5>
+      <div className="card-body p-1 d-flex flex-column">
+        <h5 className="card-title fw-bold mb-1" style={{ fontSize: '1.1rem' }}>{hotel.name}</h5>
         
         {/* Rating */}
-        <div className="mb-3">
+        <div className="mb-1">
           {renderStars(hotel.rating)}
         </div>
         
         {/* Amenities */}
         {amenitiesList.length > 0 && (
-          <div className="mb-3">
-            <small className="text-muted d-block mb-2 fw-semibold">Amenities:</small>
+          <div className="mb-1">
+            <small className="text-muted d-block fw-semibold">Amenities:</small>
             <div className="d-flex flex-wrap gap-1">
               {amenitiesList.map((amenity, index) => (
                 <span 
@@ -124,9 +129,9 @@ const HotelCard = ({ hotel }) => {
         )}
         
         {/* Book Button */}
-        <div className="mt-auto pt-2">
+        <div className="mt-auto">
           <button 
-            className="btn btn-primary w-100 py-2 fw-semibold" 
+            className="btn btn-primary w-100 fw-semibold" 
             style={{ borderRadius: '8px', fontSize: '0.95rem' }}
             onClick={handleBooking}
           >
