@@ -3,7 +3,7 @@ import { Search, MapPin, Plane, Hotel, Calendar, Users, Filter, Star, Clock, Dol
 import { useSearch, useAutocomplete, usePagination } from '../../src/hooks/useSearch';
 import "../style/TravelSearch.css";
 
-const TravelSearch = () => {
+const TravelSearch = ({ Link }) => {
   // Use the search hook
   const {
     searchQuery,
@@ -21,7 +21,8 @@ const TravelSearch = () => {
     search,
     hasResults,
     totalPages,
-    clearError
+    clearError,
+    clearResults // Assuming this method exists in your hook
   } = useSearch();
 
   // Use the autocomplete hook
@@ -48,6 +49,33 @@ const TravelSearch = () => {
 
   const autocompleteRef = useRef(null);
 
+  // Handle search type change with clearing
+  const handleSearchTypeChange = (newSearchType) => {
+    // Clear search query and autocomplete
+    setSearchQuery('');
+    setAutocompleteQuery('');
+
+    // Hide autocomplete results
+    hideResults();
+
+    // Clear any existing search results
+    if (typeof clearResults === 'function') {
+      clearResults();
+    }
+
+    // Clear any errors
+    if (error) {
+      clearError();
+    }
+
+    // Reset sorting to default
+    setSortBy('');
+    setSortDescending(false);
+
+    // Set the new search type
+    setSearchType(newSearchType);
+  };
+
   // Sync search query with autocomplete query
   const handleQueryChange = (value) => {
     setSearchQuery(value);
@@ -60,15 +88,20 @@ const TravelSearch = () => {
 
   // Handle autocomplete selection
   const handleAutocompleteSelect = async (result) => {
+    console.log(`🎯 AUTOCOMPLETE SELECTED:`, result);
+
     const selected = selectResult(result);
     setSearchQuery(selected.text);
-    
+
     // Determine search type based on result type
     const newSearchType = selected.type === 'destination' ? 'destinations' : 'hotels';
     setSearchType(newSearchType);
-    
+
+    console.log(`🔄 SEARCH TYPE CHANGED TO: ${newSearchType} (from autocomplete)`);
+
     // Perform search with selected result
     setTimeout(() => {
+      console.log(`🚀 PERFORMING SEARCH FROM AUTOCOMPLETE - Type: ${newSearchType}, Query: "${selected.text}"`);
       search(1, selected.text, newSearchType);
     }, 100);
   };
@@ -78,8 +111,13 @@ const TravelSearch = () => {
     if (!searchQuery.trim()) {
       return;
     }
-    
+
+    console.log(`🔍 SEARCH INITIATED - Type: ${searchType}, Query: "${searchQuery}", Page: ${page}`);
+
     const result = await search(page);
+
+    console.log(`📊 SEARCH RESULT - Type: ${searchType}:`, result);
+
     if (result.success) {
       goToPage(page);
     }
@@ -128,6 +166,9 @@ const TravelSearch = () => {
   const renderSearchResults = () => {
     if (!hasResults) return null;
 
+    console.log(`📋 RENDERING RESULTS - Type: ${searchType}, Total: ${searchResults.total}, Results Count: ${searchResults.results.length}`);
+    console.log(`📋 SEARCH RESULTS DATA (${searchType}):`, searchResults.results);
+
     return (
       <div className="results-container">
         {/* Results header */}
@@ -174,23 +215,27 @@ const TravelSearch = () => {
 
         {/* Results grid */}
         <div className="results-grid">
-          {searchResults.results.map((result, index) => (
-            <div 
-              key={result.id || index} 
-              className="card"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {searchType === 'destinations' && (
-                <DestinationCard destination={result} />
-              )}
-              {searchType === 'flights' && (
-                <FlightCard flight={result} />
-              )}
-              {searchType === 'hotels' && (
-                <HotelCard hotel={result} />
-              )}
-            </div>
-          ))}
+          {searchResults.results.map((result, index) => {
+            console.log(`🃏 RENDERING CARD ${index + 1} (${searchType}):`, result);
+
+            return (
+              <div
+                key={result.id || index}
+                className="card"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {searchType === 'destinations' && (
+                  <DestinationCard destination={result} Link={Link} />
+                )}
+                {searchType === 'flights' && (
+                  <FlightCard flight={result} />
+                )}
+                {searchType === 'hotels' && (
+                  <HotelCard hotel={result} />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Pagination */}
@@ -205,7 +250,7 @@ const TravelSearch = () => {
                   Previous
                 </button>
               )}
-              
+
               {getPageNumbers(5).map((page) => (
                 <button
                   key={page}
@@ -215,7 +260,7 @@ const TravelSearch = () => {
                   {page}
                 </button>
               ))}
-              
+
               {currentPage < totalPages && (
                 <button
                   onClick={() => handleSearch(currentPage + 1)}
@@ -243,7 +288,7 @@ const TravelSearch = () => {
           <div className="hero-blob-1"></div>
           <div className="hero-blob-2"></div>
         </div>
-        
+
         <div className="hero-content">
           <div className="hero-icon-container">
             <div className="hero-icon-wrapper">
@@ -267,21 +312,21 @@ const TravelSearch = () => {
             {/* Search Type Selector */}
             <div className="search-type-selector">
               <button
-                onClick={() => setSearchType('destinations')}
+                onClick={() => handleSearchTypeChange('destinations')}
                 className={`search-type-button ${searchType === 'destinations' ? 'active' : ''}`}
               >
                 <MapPin className="search-type-icon" />
                 Destinations
               </button>
               <button
-                onClick={() => setSearchType('flights')}
+                onClick={() => handleSearchTypeChange('flights')}
                 className={`search-type-button ${searchType === 'flights' ? 'active' : ''}`}
               >
                 <Plane className="search-type-icon" />
                 Flights
               </button>
               <button
-                onClick={() => setSearchType('hotels')}
+                onClick={() => handleSearchTypeChange('hotels')}
                 className={`search-type-button ${searchType === 'hotels' ? 'active' : ''}`}
               >
                 <Hotel className="search-type-icon" />
@@ -375,55 +420,75 @@ const TravelSearch = () => {
 };
 
 // Enhanced Destination Card Component
-const DestinationCard = ({ destination }) => (
-  <div className="card-content">
-    <div className="card-header">
-      <div>
-        <h3 className="card-title">{destination.name}</h3>
-        <p className="card-location">
-          <div className="card-location-icon destination">
-            <MapPin />
+const DestinationCard = ({ destination, Link }) => {
+  console.log(`🏞️  DESTINATION CARD DATA:`, destination);
+
+  return (
+    <div className="card-content">
+      <div className="card-header">
+        <div>
+          <h3 className="card-title">{destination.name}</h3>
+          <div className="card-location">
+            <div className="card-location-icon destination">
+              <MapPin />
+            </div>
+            {destination.country}
           </div>
-          {destination.country}
-        </p>
-      </div>
-      <div className="card-price">
-        <div className="hero-icon-wrapper">
-          <Sparkles className="hero-icon" style={{width: '20px', height: '20px'}} />
+        </div>
+        <div className="card-price">
+          <div className="hero-icon-wrapper">
+            <Sparkles className="hero-icon" style={{ width: '20px', height: '20px' }} />
+          </div>
         </div>
       </div>
-    </div>
-    
-    <p className="card-description">{destination.description}</p>
-    
-    {destination.tags && destination.tags.length > 0 && (
-      <div className="card-tags">
-        {destination.tags.slice(0, 3).map((tag, index) => (
-          <span key={index} className="card-tag destination">
-            {tag}
-          </span>
-        ))}
-      </div>
-    )}
 
-    {destination.averageHotelPrice > 0 && (
-      <div className="card-meta">
-        <span className="card-meta-item">
-          <DollarSign size={14} />
-          Avg Hotel: PKR {destination.averageHotelPrice.toFixed(0)}
-        </span>
-      </div>
-    )}
-    
-    <button className="card-button destination">
-      View Details
-      <ArrowRight className="card-button-icon" />
-    </button>
-  </div>
-);
+      <p className="card-description">{destination.description}</p>
+
+      {destination.tags && destination.tags.length > 0 && (
+        <div className="card-tags">
+          {destination.tags.slice(0, 3).map((tag, index) => (
+            <span key={index} className="card-tag destination">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {destination.averageHotelPrice > 0 && (
+        <div className="card-meta">
+          <span className="card-meta-item">
+            <DollarSign size={14} />
+            Avg Hotel: PKR {destination.averageHotelPrice.toFixed(0)}
+          </span>
+        </div>
+      )}
+
+      {Link ? (
+        <Link
+          to={`/plaintrip/${destination.id || destination.destinationId || ''}`}
+          className="card-button destination"
+          onClick={() => console.log(`🔗 NAVIGATING TO: /plaintrip/${destination.id || destination.destinationId}`)}
+        >
+          View More
+          <ArrowRight className="card-button-icon" />
+        </Link>
+      ) : (
+        <button
+          className="card-button destination"
+          onClick={() => console.log(`🔍 VIEW DETAILS CLICKED FOR DESTINATION:`, destination)}
+        >
+          View Details
+          <ArrowRight className="card-button-icon" />
+        </button>
+      )}
+    </div>
+  );
+};
 
 // Enhanced Flight Card Component
 const FlightCard = ({ flight }) => {
+  console.log(`✈️  FLIGHT CARD DATA:`, flight);
+
   const formatDuration = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -435,19 +500,19 @@ const FlightCard = ({ flight }) => {
       <div className="card-header">
         <div>
           <h3 className="card-title">{flight.airline}</h3>
-          <p className="card-location">
+          <div className="card-location">
             <div className="card-location-icon flight">
               <Plane />
             </div>
             {flight.departureDestination} → {flight.arrivalDestination}
-          </p>
+          </div>
         </div>
         <div className="card-price">
           <p className="card-price-amount flight">PKR {flight.price}</p>
           <p className="card-price-label">total</p>
         </div>
       </div>
-      
+
       <div className="flight-details">
         <div className="flight-time-info">
           <Clock className="flight-time-icon departure" />
@@ -479,8 +544,11 @@ const FlightCard = ({ flight }) => {
           ))}
         </div>
       )}
-      
-      <button className="card-button flight">
+
+      <button
+        className="card-button flight"
+        onClick={() => console.log(`✈️  BOOK FLIGHT CLICKED:`, flight)}
+      >
         Book Flight
         <ArrowRight className="card-button-icon" />
       </button>
@@ -489,55 +557,62 @@ const FlightCard = ({ flight }) => {
 };
 
 // Enhanced Hotel Card Component
-const HotelCard = ({ hotel }) => (
-  <div className="card-content">
-    <div className="card-header">
-      <div>
-        <h3 className="card-title">{hotel.name}</h3>
-        <p className="card-location">
-          <div className="card-location-icon hotel">
-            <MapPin />
+const HotelCard = ({ hotel }) => {
+  console.log(`🏨 HOTEL CARD DATA:`, hotel);
+
+  return (
+    <div className="card-content">
+      <div className="card-header">
+        <div>
+          <h3 className="card-title">{hotel.name}</h3>
+          <div className="card-location">
+            <div className="card-location-icon hotel">
+              <MapPin />
+            </div>
+            {hotel.destination}
           </div>
-          {hotel.destination}
-        </p>
+        </div>
+        <div className="card-price">
+          <p className="card-price-amount hotel">PKR {hotel.pricePerNight}</p>
+          <p className="card-price-label">per night</p>
+        </div>
       </div>
-      <div className="card-price">
-        <p className="card-price-amount hotel">PKR {hotel.pricePerNight}</p>
-        <p className="card-price-label">per night</p>
+
+      <div className="hotel-rating">
+        <div className="hotel-rating-stars">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`hotel-star ${i < hotel.rating ? 'filled' : 'empty'}`}
+            />
+          ))}
+          <span className="hotel-rating-value">({hotel.rating})</span>
+        </div>
       </div>
+
+      {hotel.description && (
+        <p className="card-description">{hotel.description}</p>
+      )}
+
+      {hotel.amenities && hotel.amenities.length > 0 && (
+        <div className="card-tags">
+          {hotel.amenities.slice(0, 3).map((amenity, index) => (
+            <span key={index} className="card-tag hotel">
+              {amenity}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <button
+        className="card-button hotel"
+        onClick={() => console.log(`🏨 BOOK HOTEL CLICKED:`, hotel)}
+      >
+        Book Hotel
+        <ArrowRight className="card-button-icon" />
+      </button>
     </div>
-    
-    <div className="hotel-rating">
-      <div className="hotel-rating-stars">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`hotel-star ${i < hotel.rating ? 'filled' : 'empty'}`}
-          />
-        ))}
-        <span className="hotel-rating-value">({hotel.rating})</span>
-      </div>
-    </div>
-    
-    {hotel.description && (
-      <p className="card-description">{hotel.description}</p>
-    )}
-    
-    {hotel.amenities && hotel.amenities.length > 0 && (
-      <div className="card-tags">
-        {hotel.amenities.slice(0, 3).map((amenity, index) => (
-          <span key={index} className="card-tag hotel">
-            {amenity}
-          </span>
-        ))}
-      </div>
-    )}
-    
-    <button className="card-button hotel">
-      Book Hotel
-      <ArrowRight className="card-button-icon" />
-    </button>
-  </div>
-);
+  );
+};
 
 export default TravelSearch;
